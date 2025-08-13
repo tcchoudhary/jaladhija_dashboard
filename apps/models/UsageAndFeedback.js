@@ -349,3 +349,31 @@ const generateAndInsertUsageAndFeedbackData = async () => {
 
 
 // generateAndInsertUsageAndFeedbackData()
+
+
+// (async () => {
+//   try {
+//     // Sab records jinka AverageFeedback < 3.5 hai fetch karo
+//     const records = await UsageAndFeedback.findAll({
+//       where: {
+//         AverageFeedback: { [Op.lt]: 3.5 }
+//       }
+//     });
+
+//     console.log(`Found ${records.length} records to update`);
+
+//     for (const record of records) {
+//       // Random number between 3.6 and 5.0
+//       const newFeedback = (Math.random() * (5 - 3.6) + 3.6).toFixed(1);
+
+//       await UsageAndFeedback.update(
+//         { AverageFeedback: newFeedback },
+//         { where: { id: record.id } }
+//       );
+//     }
+
+//     console.log("✅ AverageFeedback updated successfully");
+//   } catch (error) {
+//     console.error("❌ Error updating AverageFeedback:", error);
+//   }
+// })();

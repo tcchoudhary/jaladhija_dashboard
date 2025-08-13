@@ -1084,9 +1084,148 @@ const SpecificCabinWaterLevelUpdate = async (req, res) => {
   }
 };
 
+// const AllComplexesFaultList = async (req, res) => {
+//   try {
+//     // Fetch all DeviceHealthStatus records with Cabin and Complex
+//     const devices = await DeviceHealthStatus.findAll({
+//       attributes: [
+//         "cabin_id",
+//         "flushHealth",
+//         "floorCleanHealth",
+//         "fanHealth",
+//         "lightHealth",
+//         "lockHealth",
+//         "odsHealth",
+//       ],
+//       include: [
+//         {
+//           model: CabinModel,
+//           as: "cabin",
+//           attributes: ["complex_id", "cabin_name"],
+//           required: true,
+//           include: [
+//             {
+//               model: Complex,
+//               as: "complex",
+//               attributes: ["name"],
+//               required: true,
+//             },
+//           ],
+//         },
+//       ],
+//     });
+
+//     // Validate device count
+//     if (devices.length !== 40) {
+//       return res
+//         .status(400)
+//         .json({ error: `Expected 40 devices, found ${devices.length}` });
+//     }
+
+//     // Check for undefined cabin_name
+//     const invalidDevices = devices.filter(
+//       (device) => !device.cabin || !device.cabin.cabin_name
+//     );
+//     if (invalidDevices.length > 0) {
+//       return res.status(400).json({
+//         error: "Invalid data",
+//         details: `Found ${invalidDevices.length} devices with undefined cabin_name`,
+//       });
+//     }
+
+//     // // Define fault conditions
+//     // const healthFields = [
+//     //   "flushHealth",
+//     //   "floorCleanHealth",
+//     //   "fanHealth",
+//     //   "lightHealth",
+//     //   "lockHealth",
+//     //   "odsHealth",
+//     // ];
+//     const isFaulty = (field, value) => {
+//       return value !== "OK" && value !== "Working" && value !== "GOOD";
+//     };
+
+//     // Group devices by complex and process faults
+//     const summary = devices.reduce((acc, device) => {
+//       const complexId = device.cabin.complex_id;
+//       const complexName = device.cabin.complex.name;
+//       const cabinName = device.cabin.cabin_name;
+
+//       // Initialize complex in accumulator
+//       if (!acc[complexId]) {
+//         acc[complexId] = {
+//           complex_name: complexName,
+//           cabins: {},
+//           total_faults: 0,
+//         };
+//       }
+
+//       // Initialize cabin in complex
+//       if (!acc[complexId].cabins[cabinName]) {
+//         acc[complexId].cabins[cabinName] = {
+//           cabin_name: cabinName,
+//           faults: [],
+//           fault_count: 0,
+//         };
+//       }
+
+//       // Check each field for faults
+//       const fields = [
+//         "flushHealth",
+//         "floorCleanHealth",
+//         "fanHealth",
+//         "lightHealth",
+//         "lockHealth",
+//         "odsHealth",
+//       ];
+
+//       fields.forEach((field) => {
+//         if (isFaulty(field, device[field])) {
+//           acc[complexId].cabins[cabinName].faults.push(
+//             `${field}: ${device[field]}`
+//           );
+//           acc[complexId].cabins[cabinName].fault_count++;
+//           acc[complexId].total_faults++;
+//         }
+//       });
+
+//       return acc;
+//     }, {});
+
+//     // Convert summary to array
+//     const complexes = Object.values(summary).map((complex) => ({
+//       complex_name: complex.complex_name,
+//       cabins: Object.values(complex.cabins),
+//       total_faults: complex.total_faults,
+//     }));
+
+//     // Calculate total summary
+//     const totalSummary = {
+//       total_faulty_cabins: complexes.reduce((acc, complex) => {
+//         return (
+//           acc + complex.cabins.filter((cabin) => cabin.fault_count > 0).length
+//         );
+//       }, 0),
+//       total_faults: complexes.reduce(
+//         (acc, complex) => acc + complex.total_faults,
+//         0
+//       ),
+//     };
+
+//     res.json({
+//       message: "Faults retrieved successfully for all complexes",
+//       complexes,
+//       totalSummary,
+//     });
+//   } catch (error) {
+//     console.error("Error in AllComplexesFaultList:", error.message);
+//     res.status(500).json({ error: "Server error", details: error.message });
+//   }
+// };
+
 const AllComplexesFaultList = async (req, res) => {
   try {
-    // Fetch all DeviceHealthStatus records with Cabin and Complex
     const devices = await DeviceHealthStatus.findAll({
       attributes: [
         "cabin_id",
@@ -1115,44 +1254,18 @@ const AllComplexesFaultList = async (req, res) => {
       ],
     });
 
-    // Validate device count
-    if (devices.length !== 40) {
-      return res
-        .status(400)
-        .json({ error: `Expected 40 devices, found ${devices.length}` });
+    if (devices.length === 0) {
+      return res.status(404).json({ error: "No devices found" });
     }
 
-    // Check for undefined cabin_name
-    const invalidDevices = devices.filter(
-      (device) => !device.cabin || !device.cabin.cabin_name
-    );
-    if (invalidDevices.length > 0) {
-      return res.status(400).json({
-        error: "Invalid data",
-        details: `Found ${invalidDevices.length} devices with undefined cabin_name`,
-      });
-    }
+    const isFaulty = (value) =>
+      value !== "OK" && value !== "Working" && value !== "GOOD";
 
-    // // Define fault conditions
-    // const healthFields = [
-    //   "flushHealth",
-    //   "floorCleanHealth",
-    //   "fanHealth",
-    //   "lightHealth",
-    //   "lockHealth",
-    //   "odsHealth",
-    // ];
-    const isFaulty = (field, value) => {
-      return value !== "OK" && value !== "Working" && value !== "GOOD";
-    };
-
-    // Group devices by complex and process faults
     const summary = devices.reduce((acc, device) => {
       const complexId = device.cabin.complex_id;
       const complexName = device.cabin.complex.name;
       const cabinName = device.cabin.cabin_name;
 
-      // Initialize complex in accumulator
       if (!acc[complexId]) {
         acc[complexId] = {
           complex_name: complexName,
@@ -1161,16 +1274,13 @@ const AllComplexesFaultList = async (req, res) => {
         };
       }
 
-      // Initialize cabin in complex
       if (!acc[complexId].cabins[cabinName]) {
         acc[complexId].cabins[cabinName] = {
           cabin_name: cabinName,
-          faults: [],
-          fault_count: 0,
+          status: "working", // default
         };
       }
 
-      // Check each field for faults
       const fields = [
         "flushHealth",
         "floorCleanHealth",
@@ -1180,43 +1290,26 @@ const AllComplexesFaultList = async (req, res) => {
         "odsHealth",
       ];
 
-      fields.forEach((field) => {
-        if (isFaulty(field, device[field])) {
-          acc[complexId].cabins[cabinName].faults.push(
-            `${field}: ${device[field]}`
-          );
-          acc[complexId].cabins[cabinName].fault_count++;
-          acc[complexId].total_faults++;
-        }
-      });
+      if (
+        fields.some((field) => isFaulty(device[field])) &&
+        acc[complexId].cabins[cabinName].status !== "fault"
+      ) {
+        acc[complexId].cabins[cabinName].status = "fault";
+        acc[complexId].total_faults++;
+      }
 
       return acc;
     }, {});
 
-    // Convert summary to array
     const complexes = Object.values(summary).map((complex) => ({
       complex_name: complex.complex_name,
       cabins: Object.values(complex.cabins),
       total_faults: complex.total_faults,
     }));
 
-    // Calculate total summary
-    const totalSummary = {
-      total_faulty_cabins: complexes.reduce((acc, complex) => {
-        return (
-          acc + complex.cabins.filter((cabin) => cabin.fault_count > 0).length
-        );
-      }, 0),
-      total_faults: complexes.reduce(
-        (acc, complex) => acc + complex.total_faults,
-        0
-      ),
-    };
-
     res.json({
-      message: "Faults retrieved successfully for all complexes",
+      message: "Cabin status retrieved successfully for all complexes",
       complexes,
-      totalSummary,
     });
   } catch (error) {
     console.error("Error in AllComplexesFaultList:", error.message);
@@ -1224,15 +1317,198 @@ const AllComplexesFaultList = async (req, res) => {
   }
 };
 
+// const SpecificCabinFaultUpdateByComplexName = async (req, res) => {
+//   try {
+//     const { complex_name, cabin_name, fault_key, new_value } = req.body;
 
+//     // Validate inputs
+//     if (!complex_name || typeof complex_name !== "string") {
+//       return res.status(400).json({ error: "Invalid or missing complex_name" });
+//     }
+//     if (!cabin_name || !["MWC", "FWC", "PWC", "MUW"].includes(cabin_name)) {
+//       return res.status(400).json({
+//         error: "Invalid or missing cabin_name. Must be MWC, FWC, PWC, or MUW",
+//       });
+//     }
+//     const validFields = [
+//       "flushHealth",
+//       "floorCleanHealth",
+//       "fanHealth",
+//       "freshWaterLevel",
+//       "lightHealth",
+//       "recycleWaterLevel",
+//       "tapHealth",
+//       "lockHealth",
+//       "odsHealth",
+//       "airDryerHealth",
+//       "chokeHealth",
+//     ];
+//     if (!fault_key || !validFields.includes(fault_key)) {
+//       return res.status(400).json({
+//         error:
+//           "Invalid or missing fault_key. Must be one of: " +
+//           validFields.join(", "),
+//       });
+//     }
+//     const waterLevelFields = ["freshWaterLevel", "recycleWaterLevel"];
+//     const validValues = waterLevelFields.includes(fault_key)
+//       ? ["HIGH", "MEDIUM", "LOW"]
+//       : ["OK", "Working", "Faulty", "Not Working", "GOOD"];
+//     if (!new_value || !validValues.includes(new_value)) {
+//       return res.status(400).json({
+//         error: `Invalid or missing new_value for ${fault_key}. Must be one of: ${validValues.join(
+//           ", "
+//         )}`,
+//       });
+//     }
 
+//     // Fetch complex_id from complex_name
+//     const complex = await Complex.findOne({
+//       attributes: ["id"],
+//       where: { name: complex_name },
+//     });
 
+//     if (!complex) {
+//       return res
+//         .status(404)
+//         .json({ error: `Complex ${complex_name} not found` });
+//     }
+//     const complex_id = complex.id;
+
+//     // Fetch the specific device
+//     const device = await DeviceHealthStatus.findOne({
+//       attributes: ["id", "cabin_id", ...validFields],
+//       include: [
+//         {
+//           model: CabinModel,
+//           as: "cabin",
+//           attributes: ["complex_id", "cabin_name"],
+//           required: true,
+//           where: {
+//             complex_id,
+//             cabin_name,
+//           },
+//           include: [
+//             {
+//               model: Complex,
+//               as: "complex",
+//               attributes: ["name"],
+//               required: true,
+//             },
+//           ],
+//         },
+//       ],
+//     });
+
+//     // Check if device exists
+//     if (!device) {
+//       return res.status(404).json({
+//         error: `Cabin ${cabin_name} not found in complex ${complex_name}`,
+//       });
+//     }
+
+//     // Check for undefined cabin_name
+//     if (!device.cabin || !device.cabin.cabin_name) {
+//       return res
+//         .status(400)
+//         .json({ error: "Cabin data is incomplete: cabin_name is undefined" });
+//     }
+
+//     // Update the specified field
+//     const updateData = { [fault_key]: new_value };
+//     await sequelize.transaction(async (t) => {
+//       await DeviceHealthStatus.update(updateData, {
+//         where: { id: device.id },
+//         transaction: t,
+//       });
+//     });
+
+//     // Fetch updated devices for the complex
+//     const updatedDevices = await DeviceHealthStatus.findAll({
+//       attributes: ["cabin_id", ...validFields],
+//       include: [
+//         {
+//           model: CabinModel,
+//           as: "cabin",
+//           attributes: ["complex_id", "cabin_name"],
+//           required: true,
+//           where: { complex_id },
+//           include: [
+//             {
+//               model: Complex,
+//               as: "complex",
+//               attributes: ["name"],
+//               required: true,
+//             },
+//           ],
+//         },
+//       ],
+//     });
+
+//     // Define fault conditions
+//     const isFaulty = (field, value) => {
+//       if (field === "freshWaterLevel" || field === "recycleWaterLevel") {
+//         return value === "LOW";
+//       }
+//       return value !== "OK" && value !== "Working" && value !== "GOOD";
+//     };
+
+//     // Generate summary
+//     const summary = {
+//       complex_name: device.cabin.complex.name,
+//       updated_cabin: {
+//         cabin_name,
+//         fault_key,
+//         new_value,
+//       },
+//       cabins: [],
+//       total_faults: 0,
+//     };
+
+//     updatedDevices.forEach((device) => {
+//       const cabinSummary = {
+//         cabin_name: device.cabin.cabin_name,
+//         faults: [],
+//         fault_count: 0,
+//       };
+
+//       validFields.forEach((f) => {
+//         if (isFaulty(f, device[f])) {
+//           cabinSummary.faults.push(`${f}: ${device[f]}`);
+//           cabinSummary.fault_count++;
+//           summary.total_faults++;
+//         }
+//       });
+
+//       summary.cabins.push(cabinSummary);
+//     });
+
+//     res.json({
+//       message: `Fault status updated successfully for cabin ${cabin_name} in complex ${complex_name}`,
+//       complex: summary,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Error in SpecificCabinFaultUpdateByComplexName:",
+//       error.message
+//     );
+//     res.status(500).json({ error: "Server error", details: error.message });
+//   }
+// };
 
 const SpecificCabinFaultUpdateByComplexName = async (req, res) => {
   try {
     const { complex_name, cabin_name, fault_key, new_value } = req.body;
 
-    // Validate inputs
+    const validFields = [
+      "flushHealth",
+      "floorCleanHealth",
+      "fanHealth",
+      "lightHealth",
+      "lockHealth",
+      "odsHealth",
+    ];
+
     if (!complex_name || typeof complex_name !== "string") {
       return res.status(400).json({ error: "Invalid or missing complex_name" });
     }
@@ -1241,19 +1517,6 @@ const SpecificCabinFaultUpdateByComplexName = async (req, res) => {
         error: "Invalid or missing cabin_name. Must be MWC, FWC, PWC, or MUW",
       });
     }
-    const validFields = [
-      "flushHealth",
-      "floorCleanHealth",
-      "fanHealth",
-      "freshWaterLevel",
-      "lightHealth",
-      "recycleWaterLevel",
-      "tapHealth",
-      "lockHealth",
-      "odsHealth",
-      "airDryerHealth",
-      "chokeHealth",
-    ];
     if (!fault_key || !validFields.includes(fault_key)) {
       return res.status(400).json({
         error:
@@ -1261,19 +1524,16 @@ const SpecificCabinFaultUpdateByComplexName = async (req, res) => {
           validFields.join(", "),
       });
     }
-    const waterLevelFields = ["freshWaterLevel", "recycleWaterLevel"];
-    const validValues = waterLevelFields.includes(fault_key)
-      ? ["HIGH", "MEDIUM", "LOW"]
-      : ["OK", "Working", "Faulty", "Not Working", "GOOD"];
-    if (!new_value || !validValues.includes(new_value)) {
+    if (
+      !new_value ||
+      !["OK", "Working", "GOOD", "Faulty", "Not Working"].includes(new_value)
+    ) {
       return res.status(400).json({
-        error: `Invalid or missing new_value for ${fault_key}. Must be one of: ${validValues.join(
-          ", "
-        )}`,
+        error: "Invalid or missing new_value for " + fault_key,
       });
     }
 
-    // Fetch complex_id from complex_name
+    // Get complex id
     const complex = await Complex.findOne({
       attributes: ["id"],
       where: { name: complex_name },
@@ -1286,123 +1546,81 @@ const SpecificCabinFaultUpdateByComplexName = async (req, res) => {
     }
     const complex_id = complex.id;
 
-    // Fetch the specific device
+    // Find cabin device
     const device = await DeviceHealthStatus.findOne({
-      attributes: ["id", "cabin_id", ...validFields],
       include: [
         {
           model: CabinModel,
           as: "cabin",
-          attributes: ["complex_id", "cabin_name"],
-          required: true,
-          where: {
-            complex_id,
-            cabin_name,
-          },
-          include: [
-            {
-              model: Complex,
-              as: "complex",
-              attributes: ["name"],
-              required: true,
-            },
-          ],
+          attributes: ["id", "cabin_name", "complex_id"],
+          where: { complex_id, cabin_name },
         },
       ],
     });
 
-    // Check if device exists
     if (!device) {
-      return res.status(404).json({
-        error: `Cabin ${cabin_name} not found in complex ${complex_name}`,
-      });
-    }
-
-    // Check for undefined cabin_name
-    if (!device.cabin || !device.cabin.cabin_name) {
       return res
-        .status(400)
-        .json({ error: "Cabin data is incomplete: cabin_name is undefined" });
+        .status(404)
+        .json({ error: `Cabin ${cabin_name} not found in ${complex_name}` });
     }
 
-    // Update the specified field
-    const updateData = { [fault_key]: new_value };
-    await sequelize.transaction(async (t) => {
-      await DeviceHealthStatus.update(updateData, {
-        where: { id: device.id },
-        transaction: t,
-      });
-    });
+    // Update only the specific fault_key
+    // Update all fault fields to working
+    await DeviceHealthStatus.update(
+      validFields.reduce((acc, field) => {
+        acc[field] = "Working"; // or "OK" / "GOOD" depending on your business rule
+        return acc;
+      }, {}),
+      { where: { id: device.id } }
+    );
 
-    // Fetch updated devices for the complex
-    const updatedDevices = await DeviceHealthStatus.findAll({
-      attributes: ["cabin_id", ...validFields],
+    // Fetch updated complex cabin list (same logic as AllComplexesFaultList)
+    const devices = await DeviceHealthStatus.findAll({
+      attributes: validFields.concat(["cabin_id"]),
       include: [
         {
           model: CabinModel,
           as: "cabin",
           attributes: ["complex_id", "cabin_name"],
-          required: true,
           where: { complex_id },
           include: [
             {
               model: Complex,
               as: "complex",
               attributes: ["name"],
-              required: true,
             },
           ],
         },
       ],
     });
 
-    // Define fault conditions
-    const isFaulty = (field, value) => {
-      if (field === "freshWaterLevel" || field === "recycleWaterLevel") {
-        return value === "LOW";
-      }
-      return value !== "OK" && value !== "Working" && value !== "GOOD";
-    };
+    const isFaulty = (value) =>
+      value !== "OK" && value !== "Working" && value !== "GOOD";
 
-    // Generate summary
     const summary = {
-      complex_name: device.cabin.complex.name,
-      updated_cabin: {
-        cabin_name,
-        fault_key,
-        new_value,
-      },
+      complex_name,
       cabins: [],
       total_faults: 0,
     };
 
-    updatedDevices.forEach((device) => {
+    devices.forEach((device) => {
       const cabinSummary = {
         cabin_name: device.cabin.cabin_name,
-        faults: [],
-        fault_count: 0,
+        status: "working",
       };
-
-      validFields.forEach((f) => {
-        if (isFaulty(f, device[f])) {
-          cabinSummary.faults.push(`${f}: ${device[f]}`);
-          cabinSummary.fault_count++;
-          summary.total_faults++;
-        }
-      });
-
+      if (validFields.some((f) => isFaulty(device[f]))) {
+        cabinSummary.status = "fault";
+        summary.total_faults++;
+      }
       summary.cabins.push(cabinSummary);
     });
 
     res.json({
-      message: `Fault status updated successfully for cabin ${cabin_name} in complex ${complex_name}`,
+      message: `Updated ${fault_key} for ${cabin_name} in ${complex_name}`,
       complex: summary,
     });
   } catch (error) {
-    console.error(
-      "Error in SpecificCabinFaultUpdateByComplexName:",
-      error.message
-    );
+    console.error("Error in UpdateCabinFaultFieldByComplex:", error.message);
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
@@ -1605,7 +1823,7 @@ const UpdateTicketStatus = async (req, res) => {
 //     const daysInt = parseInt(days);
 //     const daysAgo = new Date();
 //     daysAgo.setDate(daysAgo.getDate() - daysInt);
-//     const isMonthly = daysInt > 30; 
+//     const isMonthly = daysInt > 30;
 //     const dateGrouping = isMonthly
 //       ? [
 //           sequelize.literal(
@@ -1689,16 +1907,19 @@ const UpdateTicketStatus = async (req, res) => {
 //   }
 // };
 
+
 const getUsageProfile = async (req, res) => {
   try {
     const { days = 30, ComplexId } = req.body;
     const daysInt = parseInt(days);
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - daysInt);
-    const isMonthly = daysInt > 90; 
+    const isMonthly = daysInt > 90;
     const dateGrouping = isMonthly
       ? [
-          sequelize.literal("DATE_FORMAT(`UsageProfile`.`created_at`, '%Y-%m')"),
+          sequelize.literal(
+            "DATE_FORMAT(`UsageProfile`.`created_at`, '%Y-%m')"
+          ),
           "period",
         ]
       : [sequelize.literal("DATE(`UsageProfile`.`created_at`)"), "period"];
@@ -1715,9 +1936,7 @@ const getUsageProfile = async (req, res) => {
       },
     };
 
-
-
-    const whereConditions2 = {}
+    const whereConditions2 = {};
 
     if (ComplexId) {
       whereConditions2["complex_id"] = ComplexId; // Assuming ComplexId is a field in the CabinModel
@@ -1773,20 +1992,18 @@ const getUsageProfile = async (req, res) => {
   }
 };
 
-
 const getUsageAndFeedback = async (req, res) => {
   try {
-    const { days = 30,ComplexId} = req.body;
+    const { days = 30, ComplexId } = req.body;
 
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - parseInt(days));
 
-       const whereConditions2 = {}
+    const whereConditions2 = {};
 
     if (ComplexId) {
       whereConditions2["complex_id"] = ComplexId; // Assuming ComplexId is a field in the CabinModel
     }
-
 
     const usageAndFeedbacks = await UsageAndFeedback.findAll({
       attributes: [
@@ -1806,7 +2023,7 @@ const getUsageAndFeedback = async (req, res) => {
       include: [
         {
           model: CabinModel,
-                    where: whereConditions2, // This condition will be applied here
+          where: whereConditions2, // This condition will be applied here
           as: "cabin",
           attributes: ["cabin_name"], // 🔥 yahi chahiye
         },

@@ -12,9 +12,14 @@ Router.post('/User-Status-update',authMiddleware,userController.UserActiveInActi
 Router.get('/User-details',authMiddleware,userController.getUserDetails);
 
 
+Router.post("/ticket-list",authMiddleware,userController.TicketRisedList);
+Router.post("/ticket-create",authMiddleware,userController.TicketCreate);
+Router.post("/ticket-status-update",authMiddleware,userController.UpdateTicketStatus);
+
+
+
 Router.get("/health-status",authMiddleware,userController.AllComplexesFaultList)
 Router.get("/live-status",authMiddleware,userController.LiveStatusForCabin)
-
 Router.post("/live-status-update",authMiddleware,userController.LiveStatusUpdate)
 Router.get("/water-level-status",authMiddleware,userController.ComplexwiseLowWaterLevelList)
 Router.post("/water-level-status-update",authMiddleware,userController.WaterLevelStatusUpdate)
@@ -26,10 +31,6 @@ Router.post("/cabinwise-health-status",authMiddleware,userController.CabinwiseHe
 // Router.post("/all-complex-usege-feedback",authMiddleware,userController.AllComplexData)
 
 Router.post("/health-status-update",authMiddleware,userController.SpecificCabinFaultUpdateByComplexName)
-Router.post("/ticket-list",authMiddleware,userController.TicketRisedList);
-Router.post("/ticket-create",authMiddleware,userController.TicketCreate);
-Router.post("/ticket-status-update",authMiddleware,userController.UpdateTicketStatus);
-
 Router.post("/usage-profile",authMiddleware,userController.getUsageProfile);
 Router.post("/usage-and-feedback",authMiddleware,userController.getUsageAndFeedback);
 

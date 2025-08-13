@@ -5,7 +5,8 @@ const Router = require("./apps/config/routes")
 const app = express();
 const logger = require("morgan");
 require('dotenv').config();
-const port = process.env.PORT || 8000;
+require("./apps/Cronjob/ticketCronJobs");
+const port = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ limit: '5000mb', extended: false }));
 app.use(bodyParser.json({ limit: '5000mb' }));
 app.use(express.json());
@@ -20,8 +21,8 @@ app.get('/health', (req, res) => {
 app.use('/uploads', express.static('./uploads'));
 app.use('/api/admin', Router);
 
-app.get('/api/ping', (req, res) => {
-  res.status(200).send('pong');
+app.get('/', (req, res) => {
+  res.status(200).send('hello');
 });
 
 
@@ -37,7 +38,7 @@ app.use((req, res) => {
 });
 
 
-app.listen(port,()=>{
+app.listen(port,'127.0.0.1',()=>{
     console.log(`server is running at ${port}`)
 });
 
