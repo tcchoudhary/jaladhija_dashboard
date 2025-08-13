@@ -22,7 +22,7 @@ app.use('/uploads', express.static('./uploads'));
 app.use('/api/admin', Router);
 
 app.get('/', (req, res) => {
-  res.status(200).send('hello apis is working');
+  res.status(200).send('hello api is working');
 });
 
 
