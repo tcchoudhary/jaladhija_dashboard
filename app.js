@@ -21,8 +21,8 @@ app.get('/health', (req, res) => {
 app.use('/uploads', express.static('./uploads'));
 app.use('/api/admin', Router);
 
-app.get('/', (req, res) => {
-  res.status(200).send('hello api is working');
+app.get('/api/ping', (req, res) => {
+  res.status(200).send('pong');
 });
 
 
